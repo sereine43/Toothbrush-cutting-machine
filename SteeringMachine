@@ -1,0 +1,30 @@
+#include <Servo.h>            //加载文件库
+int pos = 60;
+Servo myservo;
+const int servoPin1 = 10;
+ 
+void setup()
+{
+  myservo.attach(servoPin1, 500, 2500);          //修正脉冲宽度
+}
+
+void open() {//开口处开关打开
+  for (pos = 60; pos <= 120; pos += 1) {
+    myservo.write(pos);
+    delay(15);
+  }
+}
+
+void close() {//开口处开关关闭
+  for (pos = 120; pos >= 60; pos -= 1) {
+    myservo.write(pos);
+    delay(15);
+  }
+}
+
+void loop() {
+  open();
+  delay(1500);//替换为识别到后的代码
+  close();
+  delay(1500);//替换为未识别到牙刷的代码
+}
