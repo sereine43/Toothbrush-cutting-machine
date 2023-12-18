@@ -1,20 +1,27 @@
-#include <Servo.h>            //加载文件库
+#include <Servo.h>
 int pos = 0;
 Servo myservo;
- 
-void setup()
-{
-  myservo.attach(9, 500, 2500);          //修正脉冲宽度
+const int servoPin = 9;
+
+void setup() {
+  myservo.attach(servoPin, 500, 2500);
 }
- 
-void loop()
-{
-  for (pos = 42; pos <= 120; pos += 2) {       //pos+=1等价于pos=pos+1
+
+void grip() {//抓紧
+  for (pos = 10; pos <= 90; pos += 1) {
     myservo.write(pos);
-    delay(15);					
+    delay(15);
   }
-  for (pos = 120; pos >= 42; pos -= 2) {
+}
+
+void undo() {//松开
+  for (pos = 90; pos >= 10; pos -= 1) {
     myservo.write(pos);
-    delay(15); 					
+    delay(15);
   }
+}
+
+void loop() {
+  grip();
+  undo();
 }
