@@ -1,0 +1,51 @@
+from PIL import Image, ImageTk
+import tkinter as tk
+import time
+
+# 创建主窗口
+root = tk.Tk()
+root.title("牙刷刷柄回收机")
+
+# 设置窗口大小
+root.geometry("800x480")  # 根据你的触控显示屏分辨率设置
+
+# 添加背景图片
+bg_image = Image.open("background.jpg")  # 替换为你的图片文件名
+bg_photo = ImageTk.PhotoImage(bg_image)
+bg_label = tk.Label(root, image=bg_photo)
+bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+# 添加文本标签
+label1 = tk.Label(root, text="请将牙刷刷头向下投放", font=("Helvetica", 20), bg='white')
+label1.place(x=90, y=20)
+
+label2 = tk.Label(root, text="已切割牙刷刷柄:", font=("Helvetica", 24), bg='white')
+label2.place(x=420, y=70)
+
+label3 = tk.Label(root, text="已收集牙刷刷柄:", font=("Helvetica", 24), bg='white')
+label3.place(x=420, y=250)
+
+label4 = tk.Label(root, text="  个", font=("Helvetica", 30), bg='white', fg='lightblue')
+label4.place(x=600, y=150)
+
+label5 = tk.Label(root, text="  克", font=("Helvetica", 30), bg='white', fg='lightblue')
+label5.place(x=600, y=330)
+
+count = 0
+
+def update_count():
+    global count
+    if count < 100:  # 设置递增的上限条件
+        count += 1
+        label4.config(text=f"{count}个")
+        weight = 6 * count
+        label5.config(text=f"{weight}克")
+        root.after(15000, update_count)  # 每隔15秒调用一次update_count
+    else:
+        root.destroy()  # 达到上限后销毁窗口
+
+# 初始调用一次，启动循环
+update_count()
+
+# 运行主循环
+root.mainloop()
