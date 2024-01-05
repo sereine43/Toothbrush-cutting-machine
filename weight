@@ -1,0 +1,27 @@
+const int analogInputPin = A0; // 模拟输入引脚
+const float referenceVoltage = 5.0; // Arduino Uno的参考电压
+const float maxSensorVoltage = 0.3; // 传感器输出的最大电压，即10mV
+const float maxWeight = 100.0; // 假设的传感器最大测量重量
+float sensorValue;
+void setup() {
+  Serial.begin(9600);  // 初始化串口通信
+}
+
+void loop() {
+  // 读取模拟输入
+  //sensorValue origin == 604or605 重量越大数值越小
+  int sensorValue = analogRead(analogInputPin);
+
+  // 将模拟电压转换为重量
+  float voltage = (sensorValue / 1023.0) * referenceVoltage;//映射回实际电压值
+  float kona = (1.06 - voltage);
+  float weight = (984.03 - (voltage / maxSensorVoltage) * maxWeight) * 4.4 - 14.32;
+
+  // 将测量的重量发送到串口
+  Serial.println("Weight: " + String(weight) + " grams");
+  //Serial.println("voltage=" + String(voltage));
+  //Serial.println("sensorread=" + String(sensorValue));
+  //Serial.println("kona=" + String(kona));
+
+  delay(1000);  // 延时1秒
+}
