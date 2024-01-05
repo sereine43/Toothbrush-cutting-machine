@@ -1,0 +1,18 @@
+import pygame.mixer
+import time
+
+# 初始化
+pygame.mixer.init()
+
+# 选择音频文件
+audio_file = "/home/pi/Desktop/Music.mp3"  # 替换为你的音频文件路径
+
+# 加载音频文件
+pygame.mixer.music.load(audio_file)
+
+# 播放音频
+pygame.mixer.music.play()
+
+# 等待音频播放完成
+while pygame.mixer.music.get_busy():
+    time.sleep(1)
