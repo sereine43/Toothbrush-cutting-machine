@@ -1,0 +1,245 @@
+#include <Servo.h>
+#define SENSOR 7
+//int KEY_NUM = 0;
+int count = 0;
+int state = 0;
+int pos = 0;
+Servo myservo;
+Servo opencloseServo;
+int servoPin = 4;
+int pos1 = 0;
+const int servoPin1 = 10;
+const int analogInputPin = A0; // 模拟输入引脚
+const float referenceVoltage = 5.0; // Arduino Uno的参考电压
+const float maxSensorVoltage = 0.3; // 传感器输出的最大电压，即10mV
+const float maxWeight = 100.0; // 假设的传感器最大测量重量
+float sensorValue;
+float weight;
+
+int relayPin_1 = 2;
+int relayPin_2 = 3;
+
+int stepperDirectionPin = 5;
+int stepperSpeedPin = 6;
+//--------------------------------------称重传感器
+void cc(){
+// 读取模拟输入
+  //sensorValue origin == 604or605 重量越大数值越小
+  int sensorValue = analogRead(analogInputPin);
+
+  // 将模拟电压转换为重量
+  float voltage = (sensorValue / 1023.0) * referenceVoltage;//映射回实际电压值
+  float kona = (1.06 - voltage);
+  float weight = (984.03 - (voltage / maxSensorVoltage) * maxWeight) * 4.4 - 14.32;
+
+  // 将测量的重量发送到串口
+  //Serial.println("Weight: " + String(weight) + " grams");
+  //Serial.println("voltage=" + String(voltage));
+  //Serial.println("sensorread=" + String(sensorValue));
+  //Serial.println("kona=" + String(kona));
+
+  delay(1000);  // 延时1秒
+}
+
+//--------------------------------------开口舵机
+void open() {
+  for (pos1 = 0; pos1 <= 70; pos1 += 1) {
+    opencloseServo.write(pos1);
+    delay(15);
+  }
+  delay(1500);
+}
+
+void close() {
+  for (pos1 = 70; pos1 >= 0; pos1 -= 1) {
+    opencloseServo.write(pos1);
+    delay(15);
+  }
+  delay(1500);
+}
+
+void initialSteering(){
+  opencloseServo.attach(servoPin1, 500, 2500);
+   opencloseServo.write(0);
+}
+
+//--------------------------------------夹爪
+void initialGripper() {
+  myservo.attach(servoPin, 500, 2500);
+  myservo.write(0);
+}
+
+void grip() {//抓紧
+  for (pos = 0; pos <= 110; pos += 2) {
+    myservo.write(pos);
+    delay(15);					
+  }
+  delay(500);
+}
+
+void undo() {//松开
+  for (pos = 110; pos >= 0; pos -= 2) {
+    myservo.write(pos);
+    delay(15); 					
+  }
+  delay(500);
+}
+//--------------------------------------剪刀（继电器）
+void setRelays() {
+  pinMode(relayPin_1, OUTPUT);
+  pinMode(relayPin_2, OUTPUT);
+  digitalWrite(relayPin_1, LOW);
+  digitalWrite(relayPin_2, LOW);
+}
+
+void switchKnife() {
+  digitalWrite(relayPin_1, HIGH);
+  delay(1000);
+  digitalWrite(relayPin_1, LOW);
+  delay(1000);
+}
+
+void initialKnife() {
+  setRelays();
+  switchKnife();
+  digitalWrite(relayPin_2, HIGH);
+  delay(100);
+  digitalWrite(relayPin_2, LOW);
+  delay(100);
+  digitalWrite(relayPin_2, HIGH);
+  delay(100);
+  digitalWrite(relayPin_2, LOW);
+  delay(100);
+  digitalWrite(relayPin_2, HIGH);
+  delay(100);
+  digitalWrite(relayPin_2, LOW);
+  delay(1000);
+}
+
+void cut() {
+  digitalWrite(relayPin_2, HIGH);
+  delay(500);
+  digitalWrite(relayPin_2, LOW);
+  delay(500);
+}
+
+void closeKnife() {
+  digitalWrite(relayPin_2, HIGH);
+  delay(5000);
+  digitalWrite(relayPin_2, LOW);
+  switchKnife();
+}
+//-------------------------------------------步进电机
+void initialStepper() {
+  pinMode(stepperDirectionPin,OUTPUT);//设置引脚5为方向引脚
+  pinMode(stepperSpeedPin,OUTPUT);//设置引脚6为发射脉冲引脚
+}
+void moveBackward(int n) {
+  //Serial.println("F");
+  //设定转动方向
+  digitalWrite(stepperDirectionPin, LOW);
+  //发送脉冲信号
+
+  for (int i = 0; i <= n; i++) 
+  {
+    digitalWrite(stepperSpeedPin, HIGH);
+    delayMicroseconds(100); //设置高电平脉冲持续时间
+    digitalWrite(stepperSpeedPin, LOW);
+    delayMicroseconds(100); //设置低电平脉冲间隔时间
+    
+  }
+}
+void moveForward(int n) {
+  //Serial.println("B");
+  //设定转动方向
+  digitalWrite(stepperDirectionPin, HIGH);
+  //发送脉冲信号
+
+  for (int i = 0; i <= n; i++) 
+  {
+    digitalWrite(stepperSpeedPin, HIGH);
+    delayMicroseconds(100); //设置高电平脉冲持续时间
+    digitalWrite(stepperSpeedPin, LOW);
+    delayMicroseconds(100); //设置低电平脉冲间隔时间
+    
+  }
+}
+//--------------------------------------------压力传感器
+void initialPSensor() {
+  pinMode(SENSOR,INPUT);
+}
+
+int scanSensor()
+{
+  while(digitalRead(SENSOR) == LOW);
+  return(1);
+}
+//-----------------------------------------------
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  initialSteering();   
+  initialGripper();
+  initialKnife();
+  initialStepper();
+  initialPSensor();
+  
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  if (Serial.available() > 0) { // 确保有足够的字节可读
+    // 读取类别和得分的数据
+    int class_value;
+    float score_value;
+
+    // 读取类别
+   class_value = Serial.parseInt();
+   Serial.read(); // 读取分隔符，例如空格或换行符
+
+    // 读取得分
+   score_value = Serial.parseFloat();
+
+    // 取得分的前两位小数
+    // int score_int = static_cast<int>(score_value * 100); // 将得分乘以100后转换为整数
+    // float score_decimal = static_cast<float>(score_int) / 100.0; // 再除以100得到前两位小数
+
+    // 打印接收到的数据
+    // Serial.print("Class: ");
+    // Serial.println(class_value);
+    
+    // Serial.print("Score: ");
+    // Serial.println(score_decimal, 2); // 控制小数点后的位数
+
+    if (class_value == 90) {
+      open();
+      scanSensor();
+    //  Serial.println("success!");
+      count++;
+      grip();
+      close();
+      moveForward(6000);
+      cut();
+      moveForward(9000);
+      undo();
+      moveBackward(15000);
+     // cc();
+     // 发送数据到树莓派
+    
+     // Serial.println(count);
+
+      
+    //  Serial.println(weight);
+     while(Serial.available() > 0)
+     {Serial.read();}
+      // 避免发送太快
+    //  delay(1000);
+    }
+    else
+    {
+      while(Serial.available() > 0)
+     {Serial.read();}
+   }
+  }
+}
+
